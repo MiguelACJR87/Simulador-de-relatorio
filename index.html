@@ -41,29 +41,31 @@
                 <option value="tiered">Faixas de Consumo (Tarifa Progressiva)</option>
             </select>
 
+            <!-- OPÇÃO DE RATEIO GLOBAL (MOVIDA PARA CÁ) -->
+            <div class="rateio-box">
+                <input type="checkbox" id="includeRateioAC">
+                <label for="includeRateioAC">Habilitar rateio da Área Comum?</label>
+            </div>
+            <div id="rateio-selector-box" style="display:none;">
+                <label for="commonAreaMetersSelect">Selecione o(s) medidor(es) da Área Comum:</label>
+                <select name="commonAreaMetersSelect" id="commonAreaMetersSelect" multiple>
+                </select>
+                <small>Segure Ctrl (ou Cmd em Mac) para selecionar mais de um.</small>
+            </div>
+
+            <!-- Parâmetros para Custo Médio -->
             <div id="average-cost-params" class="params-box">
                 <h3>Parâmetros para Custo Médio</h3>
                 <label for="totalBill">Valor Total da Conta de Água (R$):</label>
                 <input type="number" id="totalBill" placeholder="Ex: 2500.50">
             </div>
 
+            <!-- Parâmetros para Faixas de Consumo -->
             <div id="tiered-cost-params" class="params-box" style="display:none;">
                 <h3>Configuração da Tarifa Progressiva</h3>
                 
                 <label for="sewageFee">Taxa de Esgoto (% sobre o valor total da água):</label>
                 <input type="number" id="sewageFee" placeholder="Ex: 0">
-
-                <div class="rateio-box">
-                    <input type="checkbox" id="includeRateioAC">
-                    <label for="includeRateioAC">Habilitar rateio da Área Comum?</label>
-                </div>
-
-                <div id="rateio-selector-box" style="display:none;">
-                    <label for="commonAreaMetersSelect">Selecione o(s) medidor(es) da Área Comum:</label>
-                    <select name="commonAreaMetersSelect" id="commonAreaMetersSelect" multiple>
-                    </select>
-                    <small>Segure Ctrl (ou Cmd em Mac) para selecionar mais de um.</small>
-                </div>
 
                 <h4>Configuração das Faixas (baseado no Consumo Total)</h4>
                 <div id="tiers-container">
