@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Consumo de Água</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Simulador de Consumo para Condomínios</h1>
+    </header>
+
+    <main>
+        <!-- Passo 1: Carregar os arquivos -->
+        <section id="upload-section">
+            <h2>1. Carregar Arquivos</h2>
+            <div class="file-upload-box">
+                <label for="fileInput">Arquivo de Leitura (.txt):</label>
+                <input type="file" id="fileInput" accept=".txt">
+            </div>
+            <div class="file-upload-box">
+                <label for="logoInput">Logo para o Relatório (Opcional):</label>
+                <input type="file" id="logoInput" accept="image/png, image/jpeg">
+            </div>
+        </section>
+
+        <!-- Passo 2: Configurar os parâmetros -->
+        <section id="parameter-section">
+            <h2>2. Definir Parâmetros da Simulação</h2>
+
+            <div class="condo-name-box">
+                <label for="condoName">Nome do Condomínio:</label>
+                <input type="text" id="condoName" placeholder="Ex: Condomínio Edifício Sol Nascente">
+            </div>
+            
+            <label for="billingType">Selecione o Método de Cobrança:</label>
+            <select id="billingType">
+                <option value="average">Custo Médio</option>
+                <option value="tiered">Faixas de Consumo (Tarifa Progressiva)</option>
+            </select>
+
+            <div id="average-cost-params" class="params-box">
+                <h3>Parâmetros para Custo Médio</h3>
+                <label for="totalBill">Valor Total da Conta de Água (R$):</label>
+                <input type="number" id="totalBill" placeholder="Ex: 2500.50">
+            </div>
+
+            <div id="tiered-cost-params" class="params-box" style="display:none;">
+                <h3>Configuração da Tarifa Progressiva</h3>
+                
+                <label for="sewageFee">Taxa de Esgoto (% sobre o valor total da água):</label>
+                <input type="number" id="sewageFee" placeholder="Ex: 0">
+
+                <div class="rateio-box">
+                    <input type="checkbox" id="includeRateioAC">
+                    <label for="includeRateioAC">Habilitar rateio da Área Comum?</label>
+                </div>
+
+                <div id="rateio-selector-box" style="display:none;">
+                    <label for="commonAreaMetersSelect">Selecione o(s) medidor(es) da Área Comum:</label>
+                    <select name="commonAreaMetersSelect" id="commonAreaMetersSelect" multiple>
+                    </select>
+                    <small>Segure Ctrl (ou Cmd em Mac) para selecionar mais de um.</small>
+                </div>
+
+                <h4>Configuração das Faixas (baseado no Consumo Total)</h4>
+                <div id="tiers-container">
+                    <div class="tier-row">
+                        <span>De <input type="number" class="tier-start" value="0"> até <input type="number" class="tier-end" value="10"> m³ | </span>
+                        <select class="tier-type"><option value="per_m3">Valor por m³</option><option value="fixed">Valor Fixo na Faixa</option></select>
+                        <span>: R$ <input type="number" class="tier-price" placeholder="Preço"></span>
+                        <button class="remove-tier-btn" title="Remover Faixa">Remover</button>
+                    </div>
+                </div>
+                <button id="addTierBtn" type="button">Adicionar Faixa</button>
+            </div>
+        </section>
+
+        <!-- Passo 3: Executar a simulação -->
+        <section id="action-section">
+            <button id="runSimulationBtn">3. Executar Simulação</button>
+        </section>
+
+        <!-- Passo 4: Ver e exportar os resultados -->
+        <section id="results-section">
+            <h2>Resultados da Simulação</h2>
+            <button id="generatePdfBtn" style="display:none;">Gerar Relatório PDF</button>
+            <div id="results-table"></div>
+        </section>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <script src="app.js"></script>
+
+</body>
+</html>

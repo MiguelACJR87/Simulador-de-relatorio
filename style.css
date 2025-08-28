@@ -1,0 +1,236 @@
+/* --- GERAL --- */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 20px;
+    background-color: #f8f9fa;
+    color: #343a40;
+}
+
+main {
+    max-width: 900px;
+    margin: auto;
+    background: #ffffff;
+    padding: 20px 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border: 1px solid #e9ecef;
+}
+
+/* --- CABEÇALHO --- */
+header {
+    background: linear-gradient(90deg, #005a9c, #003d6b);
+    color: #ffffff;
+    padding: 1.2rem;
+    text-align: center;
+    margin-bottom: 20px;
+    border-radius: 8px;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.8em;
+}
+
+/* --- SEÇÕES --- */
+section {
+    margin-bottom: 25px;
+    padding-bottom: 25px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+section:last-child {
+    border-bottom: none;
+}
+
+h2, h3, h4 {
+    color: #005a9c;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 8px;
+    margin-top: 0;
+}
+
+h4 {
+    font-size: 1.1em;
+    border-bottom-style: dashed;
+}
+
+/* --- FORMULÁRIOS E INPUTS --- */
+input[type="file"],
+input[type="number"],
+input[type="text"],
+select {
+    padding: 10px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    box-sizing: border-box;
+    width: 100%;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:focus, select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+select {
+    cursor: pointer;
+}
+
+label {
+    font-weight: bold;
+    color: #495057;
+}
+
+.file-upload-box {
+    margin-bottom: 15px;
+}
+
+/* --- BOTÕES --- */
+button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: bold;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+button:hover {
+    background-color: #218838;
+    transform: translateY(-1px);
+}
+
+#addTierBtn {
+    background-color: #007bff;
+    padding: 8px;
+    font-size: 0.9em;
+    max-width: 250px;
+    margin-top: 15px;
+}
+
+#addTierBtn:hover {
+    background-color: #0069d9;
+}
+
+.remove-tier-btn {
+    background-color: #dc3545;
+    padding: 6px 10px;
+    font-size: 0.8em;
+    width: auto;
+    display: inline-block;
+    margin-left: 10px;
+}
+
+.remove-tier-btn:hover {
+    background-color: #c82333;
+}
+
+#generatePdfBtn {
+    background-color: #6c757d;
+    margin-bottom: 15px;
+}
+
+#generatePdfBtn:hover {
+    background-color: #5a6268;
+}
+
+/* --- ELEMENTOS ESPECÍFICOS --- */
+.params-box {
+    border: 1px solid #e9ecef;
+    padding: 20px;
+    margin-top: 15px;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+}
+
+.condo-name-box {
+    margin-bottom: 20px;
+}
+
+.rateio-box {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #e9ecef;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+}
+
+.rateio-box input[type="checkbox"] {
+    width: auto;
+    height: 18px;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+.tier-row {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tier-row:last-child {
+    border-bottom: none;
+}
+
+.tier-row input { width: 80px; }
+.tier-row select { width: 150px; }
+
+#rateio-selector-box {
+    margin-top: 15px;
+    padding: 15px;
+    border: 1px solid #007bff;
+    background-color: #e7f3ff;
+    border-radius: 8px;
+}
+
+#commonAreaMetersSelect {
+    width: 100%;
+    min-height: 100px;
+    padding: 5px;
+}
+
+#rateio-selector-box small {
+    display: block;
+    margin-top: 5px;
+    color: #555;
+}
+
+/* --- TABELA DE RESULTADOS --- */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-size: 0.95em;
+}
+
+th, td {
+    padding: 12px;
+    border: 1px solid #dee2e6;
+    text-align: left;
+}
+
+th {
+    background-color: #005a9c;
+    color: white;
+    font-weight: bold;
+}
+
+tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
