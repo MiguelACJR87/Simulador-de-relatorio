@@ -111,4 +111,3 @@ input:focus, select:focus { outline: none; border-color: var(--primary-blue); bo
 .info-list { list-style-position: inside; padding-left: 1rem; }
 .info-list li { margin-bottom: 1rem; }
 .info-list ul { list-style-type: disc; margin-top: 0.5rem; margin-left: 2rem; }
-
