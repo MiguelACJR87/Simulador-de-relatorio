@@ -3,92 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de Parâmetros (Água)</title>
+    <title>Simulador de Relatórios</title>
+    <!-- Adicionando a biblioteca de ícones Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <header>
-        <h1>Simulador de Parâmetros (Água)</h1>
+        <div class="header-content">
+            <i class="fas fa-chart-pie header-icon"></i>
+            <h1>Simulador de Relatórios</h1>
+        </div>
     </header>
 
     <main>
-        <!-- Passo 1: Carregar os arquivos -->
-        <section id="upload-section">
-            <h2>1. Carregar Arquivos</h2>
-            <div class="file-upload-box">
-                <label for="fileInput">Arquivo de Leitura (Formato Carsoft):</label>
-                <input type="file" id="fileInput" accept=".txt">
-            </div>
-            <div class="file-upload-box">
-                <label for="logoInput">Logo para o Relatório (Opcional):</label>
-                <input type="file" id="logoInput" accept="image/png, image/jpeg">
+        <!-- Passo 1: Carregar Arquivos -->
+        <section class="card">
+            <h2 class="section-title"><i class="fas fa-upload icon"></i>1. Carregar Arquivos</h2>
+            <div class="file-upload-container">
+                <div class="file-upload-box">
+                    <label for="fileInput">Arquivo de Leitura (.txt)</label>
+                    <input type="file" id="fileInput" accept=".txt">
+                </div>
+                <div class="file-upload-box">
+                    <label for="logoInput">Logo para o Relatório (Opcional)</label>
+                    <input type="file" id="logoInput" accept="image/png, image/jpeg">
+                </div>
             </div>
         </section>
 
-        <!-- Passo 2: Configurar os parâmetros -->
-        <section id="parameter-section">
-            <h2>2. Definir Parâmetros da Simulação</h2>
+        <!-- Passo 2: Parâmetros -->
+        <section class="card">
+            <h2 class="section-title"><i class="fas fa-cogs icon"></i>2. Definir Parâmetros da Simulação</h2>
 
-            <div class="condo-name-box">
+            <div class="form-group">
                 <label for="condoName">Nome do Condomínio:</label>
                 <input type="text" id="condoName" placeholder="Ex: Condomínio Edifício Sol Nascente">
             </div>
             
-            <label for="billingType">Selecione o Método de Cobrança:</label>
-            <select id="billingType">
-                <option value="average">Custo Médio</option>
-                <option value="tiered">Faixas de Consumo (Tarifa Progressiva)</option>
-            </select>
-
-            <!-- OPÇÃO DE RATEIO GLOBAL (MOVIDA PARA CÁ) -->
+            <div class="form-group">
+                <label for="billingType">Selecione o Método de Cobrança:</label>
+                <select id="billingType">
+                    <option value="average">Custo Médio</option>
+                    <option value="tiered">Faixas de Consumo (Tarifa Progressiva)</option>
+                </select>
+            </div>
+            
             <div class="rateio-box">
                 <input type="checkbox" id="includeRateioAC">
                 <label for="includeRateioAC">Habilitar rateio da Área Comum?</label>
             </div>
             <div id="rateio-selector-box" style="display:none;">
                 <label for="commonAreaMetersSelect">Selecione o(s) medidor(es) da Área Comum:</label>
-                <select name="commonAreaMetersSelect" id="commonAreaMetersSelect" multiple>
-                </select>
+                <select name="commonAreaMetersSelect" id="commonAreaMetersSelect" multiple></select>
                 <small>Segure Ctrl (ou Cmd em Mac) para selecionar mais de um.</small>
             </div>
 
-            <!-- Parâmetros para Custo Médio -->
             <div id="average-cost-params" class="params-box">
                 <h3>Parâmetros para Custo Médio</h3>
                 <label for="totalBill">Valor Total da Conta de Água (R$):</label>
                 <input type="number" id="totalBill" placeholder="Ex: 2500.50">
             </div>
 
-            <!-- Parâmetros para Faixas de Consumo -->
             <div id="tiered-cost-params" class="params-box" style="display:none;">
                 <h3>Configuração da Tarifa Progressiva</h3>
-                
-                <label for="sewageFee">Taxa de Esgoto (% sobre o valor total da água):</label>
+                <label for="sewageFee">Taxa de Esgoto (%):</label>
                 <input type="number" id="sewageFee" placeholder="Ex: 0">
-
-                <h4>Configuração das Faixas (baseado no Consumo Total)</h4>
+                
+                <h4>Configuração das Faixas</h4>
                 <div id="tiers-container">
-                    <div class="tier-row">
-                        <span>De <input type="number" class="tier-start" value="0"> até <input type="number" class="tier-end" value="10"> m³ | </span>
-                        <select class="tier-type"><option value="per_m3">Valor por m³</option><option value="fixed">Valor Fixo na Faixa</option></select>
-                        <span>: R$ <input type="number" class="tier-price" placeholder="Preço"></span>
-                        <button class="remove-tier-btn" title="Remover Faixa">Remover</button>
-                    </div>
+                    <!-- Faixas serão adicionadas aqui -->
                 </div>
-                <button id="addTierBtn" type="button">Adicionar Faixa</button>
+                <button id="addTierBtn" type="button"><i class="fas fa-plus-circle"></i>Adicionar Faixa</button>
             </div>
         </section>
 
-        <!-- Passo 3: Executar a simulação -->
-        <section id="action-section">
-            <button id="runSimulationBtn">3. Executar Simulação</button>
+        <!-- Passo 3: Ação -->
+        <section class="action-section">
+            <button id="runSimulationBtn"><i class="fas fa-play-circle"></i>3. Executar Simulação</button>
         </section>
 
-        <!-- Passo 4: Ver e exportar os resultados -->
-        <section id="results-section">
-            <h2>Resultados da Simulação</h2>
-            <button id="generatePdfBtn" style="display:none;">Gerar Relatório PDF</button>
+        <!-- Passo 4: Resultados -->
+        <section id="results-section" class="card" style="display: none;">
+            <h2 class="section-title"><i class="fas fa-poll icon"></i>Resultados da Simulação</h2>
+            <button id="generatePdfBtn"><i class="fas fa-file-pdf"></i>Gerar Relatório PDF</button>
             <div id="results-table"></div>
         </section>
     </main>
@@ -99,3 +98,4 @@
 
 </body>
 </html>
+
