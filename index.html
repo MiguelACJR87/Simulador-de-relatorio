@@ -14,9 +14,12 @@
 
     <header class="main-header">
         <h1><i class="fas fa-calculator"></i> Simulador de Relatórios</h1>
+        <!-- Botão de Informações -->
+        <button id="infoBtn" class="info-btn" title="Informações"><i class="fas fa-info"></i></button>
     </header>
 
     <main>
+        <!-- Conteúdo principal da aplicação -->
         <div class="card">
             <div class="card-header">
                 <h2><i class="fas fa-upload"></i> 1. Carregar Dados</h2>
@@ -43,7 +46,7 @@
             <div class="card-body">
                 <div class="form-group">
                     <label for="condoName">Nome do Condomínio</label>
-                    <input type="text" id="condoName" placeholder="Ex: Condomínio Sol">
+                    <input type="text" id="condoName" placeholder="Ex: Condomínio Difference Clube">
                 </div>
                 <div class="form-group">
                     <label for="billingType">Método de Cobrança</label>
@@ -101,6 +104,45 @@
             </div>
         </section>
     </main>
+
+    <!-- Estrutura da Janela Modal de Informações -->
+    <div id="infoModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button id="closeModalBtn" class="close-btn" title="Fechar">&times;</button>
+            <h2><i class="fas fa-info-circle"></i> Informações da Aplicação</h2>
+            
+            <div class="info-section">
+                <p><strong>Versão:</strong> 1.2</p>
+                <p><strong>Autor:</strong> Miguel Carvalho</p>
+                <p><strong>Empresa:</strong> TECHMETRIA - Soluções Inteligentes</p>
+            </div>
+
+            <h3>Como usar o Simulador de Relatórios:</h3>
+            <p>Este sistema permite gerar simulações de relatórios de forma padronizada e rápida, veja como é fácil:</p>
+            
+            <ol class="info-list">
+                <li>
+                    <strong>Carregar Dados:</strong>
+                    <ul>
+                        <li><strong>Arquivo de Leitura:</strong> Deve ser utilizado o arquivo no formato CARSOFT.</li>
+                        <li><strong>Logo:</strong> Escolha um arquivo de imagem para ser inserido no relatório (PDF).</li>
+                    </ul>
+                </li>
+                <li>
+                    <strong>Parâmetros da Simulação:</strong>
+                    <ul>
+                        <li><strong>Nome do Condomínio:</strong> Insira o nome para ser exibido no relatório.</li>
+                        <li><strong>Métodos de Cobrança:</strong> Selecione entre Tarifa Progressiva ou Custo Médio.</li>
+                        <li><strong>Habilitar rateio de Área Comum?:</strong> Permite selecionar medidores de AC para rateio igualitário.</li>
+                        <li><strong>Somar Taxa de Gestão?:</strong> Adiciona um valor fixo à conta de cada unidade.</li>
+                    </ul>
+                </li>
+                <li><strong>Executar Simulação:</strong> Gera a prévia do relatório com os parâmetros aplicados.</li>
+                <li><strong>Gerar Relatório PDF:</strong> Cria o arquivo final em PDF.</li>
+            </ol>
+        </div>
+    </div>
+
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
