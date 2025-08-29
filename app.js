@@ -1,222 +1,89 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. REFERÊNCIAS AOS ELEMENTOS DO HTML
+    // 1. REFERÊNCIAS AOS ELEMENTOS
     const fileInput = document.getElementById('fileInput');
     const logoInput = document.getElementById('logoInput');
+    const logoPreview = document.getElementById('logoPreview');
     const billingTypeSelect = document.getElementById('billingType');
     const averageCostParams = document.getElementById('average-cost-params');
     const tieredCostParams = document.getElementById('tiered-cost-params');
     const runSimulationBtn = document.getElementById('runSimulationBtn');
-    const resultsSection = document.getElementById('results-section'); // Referência para a seção
+    const resultsSection = document.getElementById('results-section');
     const resultsTableDiv = document.getElementById('results-table');
     const generatePdfBtn = document.getElementById('generatePdfBtn');
     const tiersContainer = document.getElementById('tiers-container');
     const addTierBtn = document.getElementById('addTierBtn');
+    const condoNameInput = document.getElementById('condoName');
+    const totalBillInput = document.getElementById('totalBill');
     const includeRateioAC = document.getElementById('includeRateioAC');
     const rateioSelectorBox = document.getElementById('rateio-selector-box');
     const commonAreaMetersSelect = document.getElementById('commonAreaMetersSelect');
-    const condoNameInput = document.getElementById('condoName');
+    const includeManagementFee = document.getElementById('includeManagementFee');
+    const managementFeeBox = document.getElementById('management-fee-box');
+    const managementFeeValueInput = document.getElementById('managementFeeValue');
+    const toastContainer = document.getElementById('toast-container');
 
     let parsedData = [];
     let logoDataUrl = null;
 
+    // --- FUNÇÕES DE MELHORIA PROFISSIONAL ---
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        const icons = { info: 'info-circle', success: 'check-circle', error: 'exclamation-triangle' };
+        toast.innerHTML = `<i class="fas fa-${icons[type]}"></i> ${message}`;
+        toastContainer.appendChild(toast);
+        setTimeout(() => toast.remove(), 5000);
+    }
+
+    function applyCurrencyMask(event) { let value = event.target.value.replace(/\D/g, ''); if (value.length === 0) { event.target.value = ''; return; } value = (parseInt(value, 10) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); event.target.value = value; }
+    function getNumericValue(formattedString) { if (!formattedString || typeof formattedString !== 'string') return 0; const numericString = formattedString.replace('R$', '').replace(/\./g, '').replace(',', '.').trim(); const value = parseFloat(numericString); return isNaN(value) ? 0 : value; }
+
     // 2. EVENT LISTENERS
-    billingTypeSelect.addEventListener('change', () => {
-        if (billingTypeSelect.value === 'average') {
-            averageCostParams.style.display = 'block';
-            tieredCostParams.style.display = 'none';
-        } else {
-            averageCostParams.style.display = 'none';
-            tieredCostParams.style.display = 'block';
-        }
-    });
-
-    fileInput.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            parsedData = parseTxtContent(e.target.result);
-            if (parsedData.length > 0) {
-                alert(`${parsedData.length} registros carregados com sucesso!`);
-                populateCommonAreaSelector();
-                addInitialTier(); // Adiciona a primeira faixa inicial
-            } else {
-                alert('O arquivo foi lido, mas nenhum registro válido foi encontrado.');
-            }
-        };
-        // *** CORREÇÃO AQUI: Especifica a codificação para ler os acentos corretamente ***
-        reader.readAsText(file, 'ISO-8859-1');
-    });
-
-    logoInput.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (!file) { logoDataUrl = null; return; }
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            logoDataUrl = e.target.result;
-            alert('Logo carregado com sucesso!');
-        };
-        reader.readAsDataURL(file);
-    });
-
-    includeRateioAC.addEventListener('change', () => {
-        rateioSelectorBox.style.display = includeRateioAC.checked ? 'block' : 'none';
-    });
-
-    runSimulationBtn.addEventListener('click', () => {
-        if (parsedData.length === 0) {
-            alert('Por favor, carregue um arquivo de dados primeiro.');
-            return;
-        }
-        calculateAll();
-    });
-
+    billingTypeSelect.addEventListener('change', () => { if (billingTypeSelect.value === 'average') { averageCostParams.style.display = 'block'; tieredCostParams.style.display = 'none'; } else { averageCostParams.style.display = 'none'; tieredCostParams.style.display = 'block'; } });
+    fileInput.addEventListener('change', (event) => { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (e) => { parsedData = parseTxtContent(e.target.result); if (parsedData.length > 0) { showToast(`${parsedData.length} registros carregados!`, 'success'); populateCommonAreaSelector(); addInitialTier(); } else { showToast('Ficheiro lido, mas sem registros válidos.', 'error'); } }; reader.readAsText(file, 'ISO-8859-1'); });
+    logoInput.addEventListener('change', (event) => { const file = event.target.files[0]; if (!file) { logoDataUrl = null; logoPreview.src = '#'; logoPreview.style.display = 'none'; return; } const reader = new FileReader(); reader.onload = (e) => { logoDataUrl = e.target.result; logoPreview.src = logoDataUrl; logoPreview.style.display = 'block'; }; reader.readAsDataURL(file); });
+    includeRateioAC.addEventListener('change', () => { rateioSelectorBox.style.display = includeRateioAC.checked ? 'block' : 'none'; });
+    includeManagementFee.addEventListener('change', () => { managementFeeBox.style.display = includeManagementFee.checked ? 'block' : 'none'; });
+    runSimulationBtn.addEventListener('click', () => { if (parsedData.length === 0) { showToast('Carregue um ficheiro de dados primeiro.', 'error'); return; } runSimulationBtn.classList.add('loading'); setTimeout(() => { calculateAll(); runSimulationBtn.classList.remove('loading'); resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 50); });
     generatePdfBtn.addEventListener('click', generatePdf);
-    addTierBtn.addEventListener('click', addTier);
-    tiersContainer.addEventListener('click', (event) => {
-        if (event.target.classList.contains('remove-tier-btn') && tiersContainer.children.length > 1) {
-            event.target.closest('.tier-row').remove();
-        }
-    });
+    addTierBtn.addEventListener('click', () => addTier(false));
+    tiersContainer.addEventListener('click', (event) => { if (event.target.closest('.remove-tier-btn') && tiersContainer.children.length > 1) { event.target.closest('.tier-row').remove(); } });
+    totalBillInput.addEventListener('input', applyCurrencyMask);
+    managementFeeValueInput.addEventListener('input', applyCurrencyMask);
+    tiersContainer.addEventListener('input', (event) => { if (event.target.classList.contains('currency-input')) { applyCurrencyMask(event); } });
 
-    // 3. FUNÇÕES DE LÓGICA E CÁLCULO
-    function calculateAll() {
-        parsedData.forEach(item => { item.totalAPagar = 0; item.rateioAC = 0; });
-        const billingType = billingTypeSelect.value;
-        if (billingType === 'average') { calculateByAverageCost(); } else { calculateByTieredCost(); }
-        applyCommonAreaRateio();
-        displayResults();
-    }
-
-    function populateCommonAreaSelector() {
-        commonAreaMetersSelect.innerHTML = '';
-        parsedData.forEach((item, index) => {
-            const option = document.createElement('option');
-            option.value = index;
-            option.textContent = `Bloco: ${item.bloco} / Apto: ${item.apto}`;
-            commonAreaMetersSelect.appendChild(option);
-        });
-    }
-
-    function parseTxtContent(txtContent) {
-        const lines = txtContent.trim().split('\n');
-        const data = [];
-        for (let i = 1; i < lines.length; i++) {
-            const columns = lines[i].split('\t');
-            if (columns.length >= 7) {
-                data.push({
-                    apto: columns[0].trim(),
-                    leituraAnterior: parseFloat(columns[1].trim().replace(',', '.')),
-                    leituraAtual: parseFloat(columns[2].trim().replace(',', '.')),
-                    consumo: parseFloat(columns[2].trim().replace(',', '.')) - parseFloat(columns[1].trim().replace(',', '.')),
-                    totalAPagar: 0,
-                    dataLevantamento: columns[5].trim(),
-                    bloco: columns[6].trim(),
-                    rateioAC: 0
-                });
-            }
-        }
-        return data;
-    }
-
-    function applyCommonAreaRateio() {
-        if (!includeRateioAC.checked) return;
-        const selectedIndexes = Array.from(commonAreaMetersSelect.selectedOptions).map(opt => parseInt(opt.value));
-        if (selectedIndexes.length === 0) {
-            alert('Opção de rateio marcada, mas nenhum medidor foi selecionado. O rateio não será aplicado.');
-            return;
-        }
-        const commonAreaEntries = parsedData.filter((item, index) => selectedIndexes.includes(index));
-        const totalCommonAreaCost = commonAreaEntries.reduce((sum, item) => sum + item.totalAPagar, 0);
-        const numberOfUnits = parsedData.length - commonAreaEntries.length;
-        if (numberOfUnits <= 0) return;
-        const rateioPerUnit = totalCommonAreaCost / numberOfUnits;
-        parsedData.forEach((item, index) => {
-            if (!selectedIndexes.includes(index)) {
-                item.rateioAC = rateioPerUnit;
-                item.totalAPagar += item.rateioAC;
-            }
-        });
-    }
-
-    function calculateByTieredCost() {
-        const sewageFee = parseFloat(document.getElementById('sewageFee').value) || 0;
-        const tierRows = document.querySelectorAll('.tier-row');
-        const tiers = [];
-        tierRows.forEach(row => { tiers.push({ start: parseFloat(row.querySelector('.tier-start').value), end: parseFloat(row.querySelector('.tier-end').value) || Infinity, price: parseFloat(row.querySelector('.tier-price').value), type: row.querySelector('.tier-type').value }); });
-        tiers.sort((a, b) => a.start - b.start);
-
-        parsedData.forEach(apto => {
-            let waterCost = 0;
-            const applicableFixedTier = tiers.find(t => t.type === 'fixed' && apto.consumo >= t.start && apto.consumo <= t.end);
-            if (applicableFixedTier) {
-                waterCost = applicableFixedTier.price;
-            } else {
-                let billedConsumption = 0;
-                for (const tier of tiers) {
-                    if (apto.consumo <= billedConsumption) break;
-                    const consumptionInTier = Math.min(apto.consumo, tier.end) - billedConsumption;
-                    if (consumptionInTier > 0) {
-                        if (tier.type === 'fixed') {
-                            waterCost += tier.price;
-                        } else { 
-                            waterCost += consumptionInTier * tier.price;
-                        }
-                    }
-                    billedConsumption += consumptionInTier;
-                }
-            }
-            const sewageCost = waterCost * (sewageFee / 100);
-            apto.totalAPagar = waterCost + sewageCost;
-        });
-    }
-    
-    function displayResults() {
-        resultsSection.style.display = 'block';
-        const selectedIndexes = Array.from(commonAreaMetersSelect.selectedOptions).map(opt => parseInt(opt.value));
-        let tableHTML = `<table><thead><tr><th>Bloco</th><th>Apto</th><th>Leitura Anterior</th><th>Leitura Atual</th><th>Consumo (m³)</th><th>Rateio AC (R$)</th><th>Total a Pagar (R$)</th></tr></thead><tbody>`;
-        parsedData.forEach((item, index) => {
-            const isCommonArea = includeRateioAC.checked && selectedIndexes.includes(index);
-            const rateioDisplay = isCommonArea ? 'RATEADO' : (item.rateioAC > 0 ? formatNumberBR(item.rateioAC) : '0,00');
-            tableHTML += `<tr><td>${item.bloco}</td><td>${item.apto}</td><td>${formatNumberBR(item.leituraAnterior, 0)}</td><td>${formatNumberBR(item.leituraAtual, 0)}</td><td>${formatNumberBR(item.consumo, 0)}</td><td>${rateioDisplay}</td><td>R$ ${formatNumberBR(item.totalAPagar)}</td></tr>`;
-        });
-        const totalConsumption = parsedData.reduce((sum, item) => sum + item.consumo, 0);
-        const totalBilled = parsedData.reduce((sum, item) => sum + item.totalAPagar, 0);
-        const totalRateio = parsedData.reduce((sum, item) => sum + item.rateioAC, 0);
-        tableHTML += `<tr style="font-weight: bold; background-color: #e9ecef;"><td colspan="4">TOTAIS</td><td>${formatNumberBR(totalConsumption, 0)}</td><td>${formatNumberBR(totalRateio)}</td><td>R$ ${formatNumberBR(totalBilled)}</td></tr></tbody></table>`;
-        resultsTableDiv.innerHTML = tableHTML;
-    }
-
-    function addTier(isInitial = false) {
+    // 3. FUNÇÕES DE LÓGICA (CORE)
+    function calculateAll() { parsedData.forEach(item => { item.valorConsumo = 0; item.rateioAC = 0; item.taxaGestao = 0; item.totalAPagar = 0; }); const billingType = billingTypeSelect.value; if (billingType === 'average') { calculateByAverageCost(); } else { calculateByTieredCost(); } applyCommonAreaRateio(); applyManagementFee(); parsedData.forEach(item => { item.totalAPagar = item.valorConsumo + item.rateioAC + item.taxaGestao; }); displayResults(); }
+    function parseTxtContent(txtContent) { const lines = txtContent.trim().split('\n'); const data = []; for (let i = 1; i < lines.length; i++) { const columns = lines[i].split('\t'); if (columns.length >= 7) { data.push({ apto: columns[0].trim(), leituraAnterior: parseFloat(columns[1].trim().replace(',', '.')), leituraAtual: parseFloat(columns[2].trim().replace(',', '.')), consumo: parseFloat(columns[2].trim().replace(',', '.')) - parseFloat(columns[1].trim().replace(',', '.')), valorConsumo: 0, taxaGestao: 0, rateioAC: 0, totalAPagar: 0, dataLevantamento: columns[5].trim(), bloco: columns[6].trim() }); } } return data; }
+    function populateCommonAreaSelector() { commonAreaMetersSelect.innerHTML = ''; parsedData.forEach((item, index) => { const option = document.createElement('option'); option.value = index; option.textContent = `Bloco: ${item.bloco} / Apto: ${item.apto}`; commonAreaMetersSelect.appendChild(option); }); }
+    function calculateByTieredCost() { const sewageFee = parseFloat(document.getElementById('sewageFee').value) || 0; const tierRows = document.querySelectorAll('.tier-row'); const tiers = []; tierRows.forEach(row => { tiers.push({ start: parseFloat(row.querySelector('.tier-start').value), end: parseFloat(row.querySelector('.tier-end').value) || Infinity, price: getNumericValue(row.querySelector('.tier-price').value), type: row.querySelector('.tier-type').value }); }); tiers.sort((a, b) => a.start - b.start); parsedData.forEach(apto => { let waterCost = 0; const applicableFixedTier = tiers.find(t => t.type === 'fixed' && apto.consumo >= t.start && apto.consumo <= t.end); if (applicableFixedTier) { waterCost = applicableFixedTier.price; } else { let billedConsumption = 0; for (const tier of tiers) { if (apto.consumo <= billedConsumption) break; const consumptionInTier = Math.min(apto.consumo, tier.end) - billedConsumption; if (consumptionInTier > 0) { if (tier.type === 'fixed') { waterCost += tier.price; } else { waterCost += consumptionInTier * tier.price; } } billedConsumption += consumptionInTier; } } const sewageCost = waterCost * (sewageFee / 100); apto.valorConsumo = waterCost + sewageCost; }); }
+    function calculateByAverageCost() { const totalBill = getNumericValue(totalBillInput.value); if (totalBill <= 0) { showToast('Insira um valor total da conta válido.', 'error'); return; } const totalConsumption = parsedData.reduce((sum, item) => sum + item.consumo, 0); if (totalConsumption === 0) { showToast('O consumo total é zero.', 'warning'); return; } const averagePricePerM3 = totalBill / totalConsumption; parsedData.forEach(item => { item.valorConsumo = item.consumo * averagePricePerM3; }); }
+    function applyCommonAreaRateio() { if (!includeRateioAC.checked) return; const selectedIndexes = Array.from(commonAreaMetersSelect.selectedOptions).map(opt => parseInt(opt.value)); if (selectedIndexes.length === 0) { showToast('Rateio habilitado, mas nenhum medidor de AC selecionado.', 'warning'); return; } const commonAreaEntries = parsedData.filter((item, index) => selectedIndexes.includes(index)); const totalCommonAreaCost = commonAreaEntries.reduce((sum, item) => sum + item.valorConsumo, 0); const numberOfUnits = parsedData.length - commonAreaEntries.length; if (numberOfUnits <= 0) return; const rateioPerUnit = totalCommonAreaCost / numberOfUnits; parsedData.forEach((item, index) => { if (!selectedIndexes.includes(index)) { item.rateioAC = rateioPerUnit; } }); }
+    function applyManagementFee() { if (!includeManagementFee.checked) return; const feeValue = getNumericValue(managementFeeValueInput.value); if (feeValue <= 0) { showToast('Taxa de gestão habilitada, mas o valor é inválido.', 'warning'); return; } const selectedIndexes = Array.from(commonAreaMetersSelect.selectedOptions).map(opt => parseInt(opt.value)); parsedData.forEach((item, index) => { const isCommonArea = includeRateioAC.checked && selectedIndexes.includes(index); if (!isCommonArea) { item.taxaGestao = feeValue; } }); }
+    function addTier(isInitial = false, data = null) {
         const newTierRow = document.createElement('div');
         newTierRow.classList.add('tier-row');
-        let content;
-        if (isInitial) {
-            content = `
-                <span>De <input type="number" class="tier-start" value="0"> até <input type="number" class="tier-end" value="5"> m³ | </span>
-                <select class="tier-type"><option value="fixed">Valor Fixo na Faixa</option><option value="per_m3">Valor por m³</option></select>
-                <span>: R$ <input type="number" class="tier-price" placeholder="Preço"></span>
-                <button class="remove-tier-btn" title="Remover Faixa">Remover</button>
-            `;
-        } else {
-            content = `
-                <span>De <input type="number" class="tier-start" placeholder="Ex: 6"> até <input type="number" class="tier-end" placeholder="Ex: 10"> m³ | </span>
-                <select class="tier-type"><option value="per_m3">Valor por m³</option><option value="fixed">Valor Fixo na Faixa</option></select>
-                <span>: R$ <input type="number" class="tier-price" placeholder="Preço"></span>
-                <button class="remove-tier-btn" title="Remover Faixa">Remover</button>
-            `;
-        }
-        newTierRow.innerHTML = content;
+        const start = data ? data.start : (isInitial ? '0' : '');
+        const end = data ? data.end : (isInitial ? '5' : '');
+        const type = data ? data.type : (isInitial ? 'fixed' : 'per_m3');
+        const price = data ? data.price : '';
+        newTierRow.innerHTML = `
+            <span>De <input type="number" class="tier-start" value="${start}" placeholder="Ex: 6"> até <input type="number" class="tier-end" value="${end}" placeholder="Ex: 10"> m³ | </span>
+            <select class="tier-type">
+                <option value="per_m3" ${type === 'per_m3' ? 'selected' : ''}>Valor por m³</option>
+                <option value="fixed" ${type === 'fixed' ? 'selected' : ''}>Tarifa Mínima</option>
+            </select>
+            <span>: <input type="text" class="tier-price currency-input" value="${price}" placeholder="R$ 0,00"></span>
+            <button class="remove-tier-btn" title="Remover Faixa"><i class="fas fa-trash-alt"></i></button>
+        `;
         tiersContainer.appendChild(newTierRow);
     }
-
-    function addInitialTier() {
-        tiersContainer.innerHTML = ''; 
-        addTier(true);
-    }
-    
+    function addInitialTier() { tiersContainer.innerHTML = ''; addTier(true); }
     function formatNumberBR(number, decimalPlaces = 2) { const options = { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces, }; return new Intl.NumberFormat('pt-BR', options).format(number); }
-    function calculateByAverageCost() { const totalBill = parseFloat(document.getElementById('totalBill').value); if (isNaN(totalBill) || totalBill <= 0) return alert('Insira um valor total da conta válido.'); const totalConsumption = parsedData.reduce((sum, item) => sum + item.consumo, 0); if (totalConsumption === 0) return alert('O consumo total é zero.'); const averagePricePerM3 = totalBill / totalConsumption; parsedData.forEach(item => { item.totalAPagar = item.consumo * averagePricePerM3; }); }
-    function generatePdf() { const { jsPDF } = window.jspdf; const doc = new jsPDF(); const condoName = condoNameInput.value || 'Não informado'; let startY = 15; if (logoDataUrl) { try { const imgProps = doc.getImageProperties(logoDataUrl); const aspectRatio = imgProps.height / imgProps.width; const logoWidth = 50; const logoHeight = logoWidth * aspectRatio; const xPosition = doc.internal.pageSize.getWidth() - logoWidth - 14; doc.addImage(logoDataUrl, 'PNG', xPosition, 10, logoWidth, logoHeight); } catch (e) { console.error("Erro ao adicionar o logo:", e); } } doc.setFontSize(16); doc.setFont(undefined, 'bold'); doc.text("Relatório de Simulação de Consumo", 14, startY); startY += 7; doc.setFontSize(12); doc.setFont(undefined, 'normal'); doc.text(`Condomínio: ${condoName}`, 14, startY); startY += 12; const summaryBoxStartY = startY; doc.setFontSize(11); doc.setFont(undefined, 'bold'); doc.text("Resumo Geral", 14, summaryBoxStartY); doc.setLineWidth(0.2); doc.line(14, summaryBoxStartY + 2, 98, summaryBoxStartY + 2); const selectedIndexes = Array.from(commonAreaMetersSelect.selectedOptions).map(opt => parseInt(opt.value)); const residentialUnits = parsedData.filter((item, index) => !selectedIndexes.includes(index)); const commonAreaEntries = parsedData.filter((item, index) => selectedIndexes.includes(index)); const totalConsumptionAllUnits = parsedData.reduce((sum, item) => sum + item.consumo, 0); const totalBilledAllUnits = parsedData.reduce((sum, item) => sum + item.totalAPagar, 0); const totalValorAC = commonAreaEntries.reduce((sum, item) => sum + item.totalAPagar - item.rateioAC, 0); const maiorValor = residentialUnits.length > 0 ? Math.max(...residentialUnits.map(u => u.totalAPagar)) : 0; const menorValor = residentialUnits.length > 0 ? Math.min(...residentialUnits.map(u => u.totalAPagar)) : 0; let summaryText = [{ label: "Consumo Total:", value: `${formatNumberBR(totalConsumptionAllUnits, 0)} m³` }, { label: "Valor Total Faturado:", value: `R$ ${formatNumberBR(totalBilledAllUnits)}` }, { label: "Custo Área Comum:", value: `R$ ${formatNumberBR(totalValorAC)}` }, { label: "Maior Valor (Unidade):", value: `R$ ${formatNumberBR(maiorValor)}` }, { label: "Menor Valor (Unidade):", value: `R$ ${formatNumberBR(menorValor)}` }]; let summaryItemY = summaryBoxStartY + 8; doc.setFontSize(9); summaryText.forEach(item => { doc.setFont(undefined, 'bold'); doc.text(item.label, 16, summaryItemY); doc.setFont(undefined, 'normal'); doc.text(item.value, 60, summaryItemY); summaryItemY += 6; }); const paramsBoxStartY = startY; doc.setFontSize(11); doc.setFont(undefined, 'bold'); doc.text("Parâmetros Aplicados", 110, paramsBoxStartY); doc.line(110, paramsBoxStartY + 2, 196, paramsBoxStartY + 2); let paramsText = [`- Método: ${billingTypeSelect.options[billingTypeSelect.selectedIndex].text}`]; if (billingTypeSelect.value === 'tiered') { paramsText.push(`- Taxa de Esgoto: ${document.getElementById('sewageFee').value || "0"}%`); paramsText.push(`- Rateio AC: ${includeRateioAC.checked ? 'Sim' : 'Não'}`); document.querySelectorAll('.tier-row').forEach((row, index) => { const start = row.querySelector('.tier-start').value; const end = row.querySelector('.tier-end').value || '...'; const type = row.querySelector('.tier-type').options[row.querySelector('.tier-type').selectedIndex].text; const price = row.querySelector('.tier-price').value; paramsText.push(`- F${index + 1}: ${start} a ${end} m³ | ${type}: R$ ${price}`); }); } else { const totalBill = document.getElementById('totalBill').value || "N/A"; paramsText.push(`- Vlr. Total Conta: R$ ${totalBill}`); const totalConsumption = parsedData.reduce((sum, item) => sum + item.consumo, 0); if (totalConsumption > 0 && !isNaN(parseFloat(totalBill))) { const averagePricePerM3 = parseFloat(totalBill) / totalConsumption; paramsText.push(`- Custo Médio Aplicado: R$ ${formatNumberBR(averagePricePerM3, 4)} / m³`); } } let paramsItemY = paramsBoxStartY + 8; doc.setFontSize(9); doc.setFont(undefined, 'normal'); doc.text(paramsText, 112, paramsItemY, { lineHeightFactor: 1.5 }); startY = Math.max(summaryItemY, paramsItemY + (paramsText.length * 4)) + 10; const tableColumn = ["Bloco", "Apto", "L. Anterior", "L. Atual", "Consumo (m³)", "Rateio AC (R$)", "Total a Pagar (R$)"]; const tableRows = []; parsedData.forEach((item, index) => { const isCommonArea = includeRateioAC.checked && selectedIndexes.includes(index); const rateioDisplay = isCommonArea ? 'RATEADO' : `R$ ${formatNumberBR(item.rateioAC)}`; tableRows.push([item.bloco, item.apto, formatNumberBR(item.leituraAnterior, 0), formatNumberBR(item.leituraAtual, 0), formatNumberBR(item.consumo, 0), rateioDisplay, `R$ ${formatNumberBR(item.totalAPagar)}`]); }); doc.autoTable({ head: [tableColumn], body: tableRows, startY: startY, headStyles: { fillColor: [0, 90, 156] } }); doc.save(`Relatorio_${condoName.replace(/ /g, "_")}.pdf`); }
+    function displayResults() { resultsSection.style.display = 'block'; const selectedIndexes = Array.from(commonAreaMetersSelect.selectedOptions).map(opt => parseInt(opt.value)); let tableHTML = `<table><thead><tr><th>Bloco</th><th>Apto</th><th>Consumo (m³)</th><th>Vlr. Consumo (R$)</th><th>Taxa Gestão (R$)</th><th>Rateio AC (R$)</th><th>Total a Pagar (R$)</th></tr></thead><tbody>`; parsedData.forEach((item, index) => { const isCommonArea = includeRateioAC.checked && selectedIndexes.includes(index); const rateioDisplay = isCommonArea ? 'RATEADO' : formatNumberBR(item.rateioAC); const gestaoDisplay = isCommonArea ? '-' : formatNumberBR(item.taxaGestao); tableHTML += `<tr><td>${item.bloco}</td><td>${item.apto}</td><td>${formatNumberBR(item.consumo, 0)}</td><td>${formatNumberBR(item.valorConsumo)}</td><td>${gestaoDisplay}</td><td>${rateioDisplay}</td><td>R$ ${formatNumberBR(item.totalAPagar)}</td></tr>`; }); const totalConsumption = parsedData.reduce((sum, item) => sum + item.consumo, 0); const totalValorConsumo = parsedData.reduce((sum, item) => sum + item.valorConsumo, 0); const totalTaxaGestao = parsedData.reduce((sum, item) => sum + item.taxaGestao, 0); const totalRateio = parsedData.reduce((sum, item) => sum + item.rateioAC, 0); const totalBilled = parsedData.reduce((sum, item) => sum + item.totalAPagar, 0); tableHTML += `<tr style="font-weight: bold; background-color: #e9ecef;"><td colspan="2">TOTAIS</td><td>${formatNumberBR(totalConsumption, 0)}</td><td>${formatNumberBR(totalValorConsumo)}</td><td>${formatNumberBR(totalTaxaGestao)}</td><td>${formatNumberBR(totalRateio)}</td><td>R$ ${formatNumberBR(totalBilled)}</td></tr></tbody></table>`; resultsTableDiv.innerHTML = tableHTML; }
+    function generatePdf() { const { jsPDF } = window.jspdf; const doc = new jsPDF(); const condoName = condoNameInput.value || 'Não informado'; let startY = 20; if (logoDataUrl) { try { const imgProps = doc.getImageProperties(logoDataUrl); const aspectRatio = imgProps.height / imgProps.width; const logoWidth = 40; const logoHeight = logoWidth * aspectRatio; const xPosition = doc.internal.pageSize.getWidth() - logoWidth - 14; doc.addImage(logoDataUrl, 'PNG', xPosition, 10, logoWidth, logoHeight); } catch (e) { console.error("Erro ao adicionar o logo:", e); } } doc.setFontSize(18); doc.setFont(undefined, 'bold'); doc.text("Relatório de Simulação de Consumo", 14, startY); startY += 8; doc.setFontSize(12); doc.setFont(undefined, 'normal'); doc.text(`Condomínio: ${condoName}`, 14, startY); startY += 5; doc.setFontSize(8); doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 14, startY); startY += 10; const summaryBoxStartY = startY; doc.setFontSize(11); doc.setFont(undefined, 'bold'); doc.text("Resumo Geral", 14, summaryBoxStartY); doc.setLineWidth(0.2); doc.line(14, summaryBoxStartY + 2, 98, summaryBoxStartY + 2); const selectedIndexes = Array.from(commonAreaMetersSelect.selectedOptions).map(opt => parseInt(opt.value)); const residentialUnits = parsedData.filter((item, index) => !selectedIndexes.includes(index)); const commonAreaEntries = parsedData.filter((item, index) => selectedIndexes.includes(index)); const totalConsumptionAllUnits = parsedData.reduce((sum, item) => sum + item.consumo, 0); const totalBilledAllUnits = parsedData.reduce((sum, item) => sum + item.totalAPagar, 0); const totalValorAC = commonAreaEntries.reduce((sum, item) => sum + item.valorConsumo, 0); const maiorValor = residentialUnits.length > 0 ? Math.max(...residentialUnits.map(u => u.totalAPagar)) : 0; const menorValor = residentialUnits.length > 0 ? Math.min(...residentialUnits.map(u => u.totalAPagar)) : 0; let summaryText = [{ label: "Consumo Total:", value: `${formatNumberBR(totalConsumptionAllUnits, 0)} m³` }, { label: "Valor Total Faturado:", value: `R$ ${formatNumberBR(totalBilledAllUnits)}` }, { label: "Custo Área Comum:", value: `R$ ${formatNumberBR(totalValorAC)}` }, { label: "Maior Valor (Unidade):", value: `R$ ${formatNumberBR(maiorValor)}` }, { label: "Menor Valor (Unidade):", value: `R$ ${formatNumberBR(menorValor)}` }]; let summaryItemY = summaryBoxStartY + 8; doc.setFontSize(9); summaryText.forEach(item => { doc.setFont(undefined, 'bold'); doc.text(item.label, 16, summaryItemY); doc.setFont(undefined, 'normal'); doc.text(item.value, 60, summaryItemY); summaryItemY += 6; }); const paramsBoxStartY = startY; doc.setFontSize(11); doc.setFont(undefined, 'bold'); doc.text("Parâmetros Aplicados", 110, paramsBoxStartY); doc.line(110, paramsBoxStartY + 2, 196, paramsBoxStartY + 2); let paramsText = [`- Método: ${billingTypeSelect.options[billingTypeSelect.selectedIndex].text}`]; if (billingTypeSelect.value === 'tiered') { paramsText.push(`- Taxa de Esgoto: ${document.getElementById('sewageFee').value || "0"}%`); paramsText.push(`- Rateio AC: ${includeRateioAC.checked ? 'Sim' : 'Não'}`); if (includeManagementFee.checked) paramsText.push(`- Taxa de Gestão: ${managementFeeValueInput.value || 'R$ 0,00'}`); document.querySelectorAll('.tier-row').forEach((row, index) => { const start = row.querySelector('.tier-start').value; const end = row.querySelector('.tier-end').value || '...'; const type = row.querySelector('.tier-type').options[row.querySelector('.tier-type').selectedIndex].text; const price = row.querySelector('.tier-price').value; paramsText.push(`- F${index + 1}: ${start} a ${end} m³ | ${type}: ${price}`); }); } else { const totalBillText = totalBillInput.value || "N/A"; paramsText.push(`- Vlr. Total Conta: ${totalBillText}`); const totalConsumption = parsedData.reduce((sum, item) => sum + item.consumo, 0); const totalBillNum = getNumericValue(totalBillInput.value); if (totalConsumption > 0 && totalBillNum > 0) { const averagePricePerM3 = totalBillNum / totalConsumption; paramsText.push(`- Custo Médio Aplicado: R$ ${formatNumberBR(averagePricePerM3, 4)} / m³`); } } let paramsItemY = paramsBoxStartY + 8; doc.setFontSize(9); doc.setFont(undefined, 'normal'); doc.text(paramsText, 112, paramsItemY, { lineHeightFactor: 1.5 }); startY = Math.max(summaryItemY, paramsItemY + (paramsText.length * 4)) + 10; const tableColumn = ["Bloco", "Apto", "Consumo (m³)", "Vlr. Consumo (R$)", "Taxa Gestão (R$)", "Rateio AC (R$)", "Total a Pagar (R$)"]; const tableRows = []; parsedData.forEach((item, index) => { const isCommonArea = includeRateioAC.checked && selectedIndexes.includes(index); const rateioDisplay = isCommonArea ? 'RATEADO' : `R$ ${formatNumberBR(item.rateioAC)}`; const gestaoDisplay = isCommonArea ? '-' : `R$ ${formatNumberBR(item.taxaGestao)}`; tableRows.push([item.bloco, item.apto, formatNumberBR(item.consumo, 0), `R$ ${formatNumberBR(item.valorConsumo)}`, gestaoDisplay, rateioDisplay, `R$ ${formatNumberBR(item.totalAPagar)}`]); }); doc.autoTable({ head: [tableColumn], body: tableRows, startY: startY, headStyles: { fillColor: [0, 90, 156] } }); doc.save(`Relatorio_${condoName.replace(/ /g, "_")}.pdf`); }
+
+    // Inicia a aplicação
+    addInitialTier();
 });
 
