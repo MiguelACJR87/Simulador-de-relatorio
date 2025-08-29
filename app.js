@@ -21,6 +21,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const managementFeeBox = document.getElementById('management-fee-box');
     const managementFeeValueInput = document.getElementById('managementFeeValue');
     const toastContainer = document.getElementById('toast-container');
+    // Referências para a Janela Modal
+    const infoBtn = document.getElementById('infoBtn');
+    const infoModal = document.getElementById('infoModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
 
     let parsedData = [];
     let logoDataUrl = null;
@@ -51,6 +55,21 @@ document.addEventListener('DOMContentLoaded', () => {
     totalBillInput.addEventListener('input', applyCurrencyMask);
     managementFeeValueInput.addEventListener('input', applyCurrencyMask);
     tiersContainer.addEventListener('input', (event) => { if (event.target.classList.contains('currency-input')) { applyCurrencyMask(event); } });
+
+    // Event Listeners para a Janela Modal
+    infoBtn.addEventListener('click', () => {
+        infoModal.classList.remove('hidden');
+    });
+    closeModalBtn.addEventListener('click', () => {
+        infoModal.classList.add('hidden');
+    });
+    infoModal.addEventListener('click', (event) => {
+        // Fecha a modal se o clique for no fundo (overlay)
+        if (event.target === infoModal) {
+            infoModal.classList.add('hidden');
+        }
+    });
+
 
     // 3. FUNÇÕES DE LÓGICA (CORE)
     function calculateAll() { parsedData.forEach(item => { item.valorConsumo = 0; item.rateioAC = 0; item.taxaGestao = 0; item.totalAPagar = 0; }); const billingType = billingTypeSelect.value; if (billingType === 'average') { calculateByAverageCost(); } else { calculateByTieredCost(); } applyCommonAreaRateio(); applyManagementFee(); parsedData.forEach(item => { item.totalAPagar = item.valorConsumo + item.rateioAC + item.taxaGestao; }); displayResults(); }
