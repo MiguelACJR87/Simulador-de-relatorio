@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultsSection = document.getElementById('results-section');
     const resultsTableDiv = document.getElementById('results-table');
     const generatePdfBtn = document.getElementById('generatePdfBtn');
+    const generateXlsxBtn = document.getElementById('generateXlsxBtn'); 
     const tiersContainer = document.getElementById('tiers-container');
     const addTierBtn = document.getElementById('addTierBtn');
     const condoNameInput = document.getElementById('condoName');
@@ -28,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let parsedData = [];
     let logoDataUrl = null;
 
-    // --- FUNÇÕES DE MELHORIA PROFISSIONAL ---
+    // --- FUNÇÕES DE UTILS ---
     function showToast(message, type = 'info') {
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
@@ -49,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     includeManagementFee.addEventListener('change', () => { managementFeeBox.style.display = includeManagementFee.checked ? 'block' : 'none'; });
     runSimulationBtn.addEventListener('click', () => { if (parsedData.length === 0) { showToast('Carregue um ficheiro de dados primeiro.', 'error'); return; } runSimulationBtn.classList.add('loading'); setTimeout(() => { calculateAll(); runSimulationBtn.classList.remove('loading'); resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 50); });
     generatePdfBtn.addEventListener('click', generatePdf);
+    generateXlsxBtn.addEventListener('click', generateXlsx);
     addTierBtn.addEventListener('click', () => addTier(false));
     tiersContainer.addEventListener('click', (event) => { if (event.target.closest('.remove-tier-btn') && tiersContainer.children.length > 1) { event.target.closest('.tier-row').remove(); } });
     totalBillInput.addEventListener('input', applyCurrencyMask);
@@ -155,7 +157,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // *** AJUSTE FINAL: Adiciona a data no rodapé e alinha à direita ***
         const pageHeight = doc.internal.pageSize.getHeight();
         const pageWidth = doc.internal.pageSize.getWidth();
         const timestamp = `Gerado em: ${new Date().toLocaleString('pt-BR')}`;
@@ -167,6 +168,159 @@ document.addEventListener('DOMContentLoaded', () => {
         doc.save(`Relatorio_${condoName.replace(/ /g, "_")}.pdf`);
     }
 
+    // --- GERADOR DE EXCEL (XLSX) COM FORMATAÇÃO MONETÁRIA CORRETA ---
+    function generateXlsx() {
+        if (parsedData.length === 0) {
+            showToast('Não há dados para exportar.', 'error');
+            return;
+        }
+
+        const condoName = condoNameInput.value || 'Condominio (Não informado)';
+        const timestamp = new Date().toLocaleString('pt-BR');
+        
+        // 1. Array de Dados (Worksheet Data)
+        const ws_data = [
+            ["RELATÓRIO DE SIMULAÇÃO DE CONSUMO"],
+            [`Condomínio: ${condoName}`],
+            [`Data de Geração: ${timestamp}`]
+        ];
+
+        // 2. INSERÇÃO DOS PARÂMETROS DO CÁLCULO
+        ws_data.push([]); // Linha em branco
+        ws_data.push(["PARÂMETROS UTILIZADOS NO CÁLCULO:"]);
+
+        const billingType = billingTypeSelect.value;
+        const methodText = billingTypeSelect.options[billingTypeSelect.selectedIndex].text;
+        
+        ws_data.push(["Método de Cobrança:", methodText]);
+
+        if (billingType === 'average') {
+            const totalBillText = totalBillInput.value || "R$ 0,00";
+            const totalBillNum = getNumericValue(totalBillInput.value);
+            const totalConsumption = parsedData.reduce((sum, item) => sum + item.consumo, 0);
+            
+            ws_data.push(["Valor Total da Conta:", totalBillText]);
+            
+            if (totalConsumption > 0) {
+                const averagePricePerM3 = totalBillNum / totalConsumption;
+                ws_data.push(["Consumo Total (m³):", totalConsumption]);
+                ws_data.push(["Custo Médio Calculado:", `R$ ${formatNumberBR(averagePricePerM3, 4)} / m³`]);
+            }
+        } else {
+            const sewageFee = document.getElementById('sewageFee').value || "0";
+            ws_data.push(["Taxa de Esgoto:", `${sewageFee}%`]);
+            
+            ws_data.push([]); 
+            ws_data.push(["DETALHE DAS FAIXAS (TARIFA PROGRESSIVA):"]);
+            ws_data.push(["Descrição", "Intervalo (m³)", "Tipo", "Valor (R$)"]);
+            
+            document.querySelectorAll('.tier-row').forEach((row, index) => {
+                const start = row.querySelector('.tier-start').value;
+                const end = row.querySelector('.tier-end').value || '...';
+                const typeText = row.querySelector('.tier-type').options[row.querySelector('.tier-type').selectedIndex].text;
+                const price = row.querySelector('.tier-price').value;
+                
+                ws_data.push([
+                    `Faixa ${index + 1}`,
+                    `${start} a ${end}`,
+                    typeText,
+                    price
+                ]);
+            });
+            ws_data.push([]); 
+        }
+
+        const rateioText = includeRateioAC.checked ? "SIM (Rateio Igualitário)" : "NÃO";
+        ws_data.push(["Rateio Área Comum:", rateioText]);
+        
+        if (includeManagementFee.checked) {
+            ws_data.push(["Taxa de Gestão (Unidade):", managementFeeValueInput.value || "R$ 0,00"]);
+        }
+
+        ws_data.push([]); 
+
+        // 3. Cabeçalho da Tabela Principal
+        ws_data.push(["Bloco", "Apto", "Leitura Anterior", "Leitura Atual", "Consumo (m³)", "Valor Consumo (R$)", "Rateio AC (R$)", "Taxa Gestão (R$)", "Total a Pagar (R$)"]);
+
+        // 4. Preenche os dados da tabela
+        parsedData.forEach(item => {
+            ws_data.push([
+                item.bloco,
+                item.apto,
+                item.leituraAnterior,
+                item.leituraAtual,
+                item.consumo,
+                item.valorConsumo,
+                item.rateioAC,
+                item.taxaGestao,
+                item.totalAPagar
+            ]);
+        });
+
+        // 5. Calcula Totais
+        const totalConsumption = parsedData.reduce((sum, item) => sum + item.consumo, 0);
+        const totalValorConsumo = parsedData.reduce((sum, item) => sum + item.valorConsumo, 0);
+        const totalRateio = parsedData.reduce((sum, item) => sum + item.rateioAC, 0);
+        const totalTaxaGestao = parsedData.reduce((sum, item) => sum + item.taxaGestao, 0);
+        const totalBilled = parsedData.reduce((sum, item) => sum + item.totalAPagar, 0);
+
+        ws_data.push([]); 
+        ws_data.push(["TOTAIS", "", "", "", totalConsumption, totalValorConsumo, totalRateio, totalTaxaGestao, totalBilled]);
+
+        // 6. Cria a planilha
+        const ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+        // 7. APLICAÇÃO DE FORMATAÇÃO MONETÁRIA NAS CÉLULAS
+        // Itera sobre todas as células da planilha e aplica formato R$ nas colunas F, G, H, I (índices 5, 6, 7, 8)
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        for (let R = range.s.r; R <= range.e.r; ++R) {
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const cellRef = XLSX.utils.encode_cell({c: C, r: R});
+                if (!ws[cellRef]) continue;
+
+                // Verifica se o conteúdo é número (type 'n')
+                if (ws[cellRef].t === 'n') {
+                    // Colunas F(5), G(6), H(7), I(8) -> Formato "R$ 1.234,56"
+                    if (C >= 5 && C <= 8) {
+                        ws[cellRef].z = '"R$ "#,##0.00';
+                    }
+                    // Opcional: Coluna E(4) Consumo -> Formato "1.234,56" (sem R$)
+                    if (C === 4) {
+                        ws[cellRef].z = '#,##0.00';
+                    }
+                }
+            }
+        }
+
+        // 8. Mesclagem do Cabeçalho
+        if(!ws['!merges']) ws['!merges'] = [];
+        ws['!merges'].push({ s: {r:0, c:0}, e: {r:0, c:8} });
+        ws['!merges'].push({ s: {r:1, c:0}, e: {r:1, c:8} });
+        ws['!merges'].push({ s: {r:2, c:0}, e: {r:2, c:8} });
+
+        // 9. Largura das colunas
+        const wscols = [
+            {wch: 15}, 
+            {wch: 25}, 
+            {wch: 15}, 
+            {wch: 15}, 
+            {wch: 15}, 
+            {wch: 20}, 
+            {wch: 15}, 
+            {wch: 15}, 
+            {wch: 20}  
+        ];
+        ws['!cols'] = wscols;
+
+        // 10. Salva o arquivo
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Relatório");
+
+        const fileName = `Relatorio_${condoName.replace(/ /g, "_")}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+        
+        showToast('Arquivo Excel (Formatado) gerado com sucesso!', 'success');
+    }
+
     addInitialTier();
 });
-
