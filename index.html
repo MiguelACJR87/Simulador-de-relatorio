@@ -9,17 +9,14 @@
 </head>
 <body>
 
-    <!-- Contentor para as Notificações Modernas -->
     <div id="toast-container"></div>
 
     <header class="main-header">
         <h1><i class="fas fa-calculator"></i> Simulador de Relatórios</h1>
-        <!-- Botão de Informações -->
         <button id="infoBtn" class="info-btn" title="Informações"><i class="fas fa-info"></i></button>
     </header>
 
     <main>
-        <!-- Conteúdo principal da aplicação -->
         <div class="card">
             <div class="card-header">
                 <h2><i class="fas fa-upload"></i> 1. Carregar Dados</h2>
@@ -99,20 +96,23 @@
                 </div>
                 <div class="card-body">
                     <div id="results-table"></div>
-                    <button id="generatePdfBtn" class="btn btn-dark"><i class="fas fa-file-pdf"></i> Gerar Relatório PDF</button>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+                        <button id="generatePdfBtn" class="btn btn-dark"><i class="fas fa-file-pdf"></i> Gerar Relatório PDF</button>
+                        <button id="generateXlsxBtn" class="btn btn-success"><i class="fas fa-file-excel"></i> Gerar Excel (XLSX)</button>
+                    </div>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- Estrutura da Janela Modal de Informações -->
     <div id="infoModal" class="modal-overlay hidden">
         <div class="modal-content">
             <button id="closeModalBtn" class="close-btn" title="Fechar">&times;</button>
             <h2><i class="fas fa-info-circle"></i> Informações da Aplicação</h2>
             
             <div class="info-section">
-                <p><strong>Versão:</strong> 1.2</p>
+                <p><strong>Versão:</strong> 1.4</p>
                 <p><strong>Autor:</strong> Miguel Carvalho</p>
                 <p><strong>Empresa:</strong> TECHMETRIA - Soluções Inteligentes</p>
             </div>
@@ -131,19 +131,16 @@
                 <li>
                     <strong>Parâmetros da Simulação:</strong>
                     <ul>
-                        <li><strong>Nome do Condomínio:</strong> Insira o nome para ser exibido no relatório.</li>
+                        <li><strong>Nome do Condomínio:</strong> Insira o nome para ser exibido no relatório e no Excel.</li>
                         <li><strong>Métodos de Cobrança:</strong> Selecione entre Tarifa Progressiva ou Custo Médio.</li>
-                        <li><strong>Habilitar rateio de Área Comum?:</strong> Permite selecionar medidores de AC para rateio igualitário.</li>
-                        <li><strong>Somar Taxa de Gestão?:</strong> Adiciona um valor fixo à conta de cada unidade.</li>
+                        <li><strong>Exportação:</strong> Gere PDF ou Excel (XLSX) com cabeçalhos padronizados.</li>
                     </ul>
                 </li>
-                <li><strong>Executar Simulação:</strong> Gera a prévia do relatório com os parâmetros aplicados.</li>
-                <li><strong>Gerar Relatório PDF:</strong> Cria o arquivo final em PDF.</li>
             </ol>
         </div>
     </div>
 
-
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <script src="app.js"></script>
