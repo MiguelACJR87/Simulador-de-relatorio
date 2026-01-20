@@ -4,7 +4,7 @@
 /* Define a paleta de cores baseada no seu logo */
 :root {
     --primary-blue: #3a9bda;
-    --accent-green: #00B050;
+    --accent-green: #8dc63f;
     --accent-orange: #f7941d;
     --dark-gray: #4d4d4d;
     --light-gray: #f4f7fc;
@@ -14,6 +14,7 @@
     --success-green: #2ecc71;
     --info-blue: #3498db;
     --warning-orange: #f39c12;
+    --excel-green: #217346;
 }
 
 /* Reset e Configurações Globais */
@@ -49,14 +50,23 @@ input:focus, select:focus { outline: none; border-color: var(--primary-blue); bo
 
 /* Botões */
 .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease-in-out; display: inline-flex; align-items: center; justify-content: center; gap: 8px; position: relative; }
+
 .btn-primary { background-color: var(--accent-green); color: var(--white); box-shadow: 0 4px 10px rgba(141, 198, 63, 0.4); }
 .btn-primary:hover { background-color: #7cb336; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(141, 198, 63, 0.5); }
+
 .btn-secondary { background-color: var(--primary-blue); color: var(--white); }
 .btn-secondary:hover { background-color: #2c7bb1; }
+
 .btn-dark { background-color: var(--dark-gray); color: var(--white); }
 .btn-dark:hover { background-color: #333; }
+
 .btn-danger { background-color: var(--danger-red); color: var(--white); }
 .btn-danger:hover { background-color: #c0392b; }
+
+/* Botão Excel */
+.btn-success { background-color: var(--excel-green); color: var(--white); }
+.btn-success:hover { background-color: #1a5c38; }
+
 .btn-full { width: 100%; }
 
 /* Estado de Carregamento do Botão */
