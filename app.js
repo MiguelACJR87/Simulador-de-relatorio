@@ -60,15 +60,80 @@ document.addEventListener('DOMContentLoaded', () => {
     closeModalBtn.addEventListener('click', () => { infoModal.classList.add('hidden'); });
     infoModal.addEventListener('click', (event) => { if (event.target === infoModal) { infoModal.classList.add('hidden'); } });
 
+    // Novo Event Listener: Recálculo instantâneo ao editar leituras na tabela
+    resultsTableDiv.addEventListener('input', (event) => {
+        if (event.target.classList.contains('edit-leitura')) {
+            const index = parseInt(event.target.dataset.index);
+            const field = event.target.dataset.field;
+            
+            // Permite digitação com vírgula para decimais e extrai o valor
+            let rawValue = event.target.value.replace(',', '.');
+            let newVal = parseFloat(rawValue);
+
+            // Atualiza os dados no array (se ficar vazio, assume 0 temporariamente)
+            parsedData[index][field] = isNaN(newVal) ? 0 : newVal;
+            
+            // Atualiza consumo impedindo que fique negativo
+            parsedData[index].consumo = Math.max(0, parsedData[index].leituraAtual - parsedData[index].leituraAnterior);
+
+            // Salva posição do cursor para não atrapalhar a digitação
+            const activeId = event.target.id;
+            let start = 0, end = 0;
+            try { start = event.target.selectionStart; end = event.target.selectionEnd; } catch (e) {}
+
+            // Recalcula e redesenha
+            calculateAll();
+
+            // Devolve o foco ao input
+            const inputToFocus = document.getElementById(activeId);
+            if (inputToFocus) {
+                inputToFocus.focus();
+                inputToFocus.value = event.target.value; 
+                try { inputToFocus.setSelectionRange(start, end); } catch (e) {}
+            }
+        }
+    });
+
     // 3. FUNÇÕES DE LÓGICA (CORE)
-    function calculateAll() { parsedData.forEach(item => { item.valorConsumo = 0; item.rateioAC = 0; item.taxaGestao = 0; item.totalAPagar = 0; }); const billingType = billingTypeSelect.value; if (billingType === 'average') { calculateByAverageCost(); } else { calculateByTieredCost(); } applyCommonAreaRateio(); applyManagementFee(); parsedData.forEach(item => { item.totalAPagar = item.valorConsumo + item.rateioAC + item.taxaGestao; }); displayResults(); }
+    function calculateAll() { 
+        parsedData.forEach(item => { item.valorConsumo = 0; item.rateioAC = 0; item.taxaGestao = 0; item.totalAPagar = 0; }); 
+        
+        const billingType = billingTypeSelect.value; 
+        if (billingType === 'average') { calculateByAverageCost(); } 
+        else { calculateByTieredCost(); } 
+        
+        applyCommonAreaRateio(); 
+        applyManagementFee(); 
+
+        const selectedIndexes = Array.from(commonAreaMetersSelect.selectedOptions).map(opt => parseInt(opt.value));
+        
+        parsedData.forEach((item, index) => { 
+            const isCommonArea = includeRateioAC.checked && selectedIndexes.includes(index);
+            
+            if (isCommonArea) {
+                // Área Comum não soma valor no faturamento final (já foi rateado)
+                item.totalAPagar = 0; 
+            } else {
+                item.totalAPagar = item.valorConsumo + item.rateioAC + item.taxaGestao; 
+            }
+        }); 
+        
+        displayResults(); 
+    }
+
     function parseTxtContent(txtContent) { const lines = txtContent.trim().split('\n'); const data = []; for (let i = 1; i < lines.length; i++) { const columns = lines[i].split('\t'); if (columns.length >= 7) { data.push({ apto: columns[0].trim(), leituraAnterior: parseFloat(columns[1].trim().replace(',', '.')), leituraAtual: parseFloat(columns[2].trim().replace(',', '.')), consumo: parseFloat(columns[2].trim().replace(',', '.')) - parseFloat(columns[1].trim().replace(',', '.')), valorConsumo: 0, taxaGestao: 0, rateioAC: 0, totalAPagar: 0, dataLevantamento: columns[5].trim(), bloco: columns[6].trim() }); } } return data; }
     function populateCommonAreaSelector() { commonAreaMetersSelect.innerHTML = ''; parsedData.forEach((item, index) => { const option = document.createElement('option'); option.value = index; option.textContent = `Bloco: ${item.bloco} / Apto: ${item.apto}`; commonAreaMetersSelect.appendChild(option); }); }
+    
     function calculateByTieredCost() { const sewageFee = parseFloat(document.getElementById('sewageFee').value) || 0; const tierRows = document.querySelectorAll('.tier-row'); const tiers = []; tierRows.forEach(row => { tiers.push({ start: parseFloat(row.querySelector('.tier-start').value), end: parseFloat(row.querySelector('.tier-end').value) || Infinity, price: getNumericValue(row.querySelector('.tier-price').value), type: row.querySelector('.tier-type').value }); }); tiers.sort((a, b) => a.start - b.start); parsedData.forEach(apto => { let waterCost = 0; const applicableFixedTier = tiers.find(t => t.type === 'fixed' && apto.consumo >= t.start && apto.consumo <= t.end); if (applicableFixedTier) { waterCost = applicableFixedTier.price; } else { let billedConsumption = 0; for (const tier of tiers) { if (apto.consumo <= billedConsumption) break; const consumptionInTier = Math.min(apto.consumo, tier.end) - billedConsumption; if (consumptionInTier > 0) { if (tier.type === 'fixed') { waterCost += tier.price; } else { waterCost += consumptionInTier * tier.price; } } billedConsumption += consumptionInTier; } } const sewageCost = waterCost * (sewageFee / 100); apto.valorConsumo = waterCost + sewageCost; }); }
+    
     function calculateByAverageCost() { const totalBill = getNumericValue(totalBillInput.value); if (totalBill <= 0) { showToast('Insira um valor total da conta válido.', 'error'); return; } const totalConsumption = parsedData.reduce((sum, item) => sum + item.consumo, 0); if (totalConsumption === 0) { showToast('O consumo total é zero.', 'warning'); return; } const averagePricePerM3 = totalBill / totalConsumption; parsedData.forEach(item => { item.valorConsumo = item.consumo * averagePricePerM3; }); }
+    
     function applyCommonAreaRateio() { if (!includeRateioAC.checked) return; const selectedIndexes = Array.from(commonAreaMetersSelect.selectedOptions).map(opt => parseInt(opt.value)); if (selectedIndexes.length === 0) { showToast('Rateio habilitado, mas nenhum medidor de AC selecionado.', 'warning'); return; } const commonAreaEntries = parsedData.filter((item, index) => selectedIndexes.includes(index)); const totalCommonAreaCost = commonAreaEntries.reduce((sum, item) => sum + item.valorConsumo, 0); const numberOfUnits = parsedData.length - commonAreaEntries.length; if (numberOfUnits <= 0) return; const rateioPerUnit = totalCommonAreaCost / numberOfUnits; parsedData.forEach((item, index) => { if (!selectedIndexes.includes(index)) { item.rateioAC = rateioPerUnit; } }); }
+    
     function applyManagementFee() { if (!includeManagementFee.checked) return; const feeValue = getNumericValue(managementFeeValueInput.value); if (feeValue <= 0) { showToast('Taxa de gestão habilitada, mas o valor é inválido.', 'warning'); return; } const selectedIndexes = Array.from(commonAreaMetersSelect.selectedOptions).map(opt => parseInt(opt.value)); parsedData.forEach((item, index) => { const isCommonArea = includeRateioAC.checked && selectedIndexes.includes(index); if (!isCommonArea) { item.taxaGestao = feeValue; } }); }
+    
     function addTier(isInitial = false) { const newTierRow = document.createElement('div'); newTierRow.classList.add('tier-row'); const content = isInitial ? `<span>De <input type="number" class="tier-start" value="0"> até <input type="number" class="tier-end" value="5"> m³ | </span><select class="tier-type"><option value="fixed">Tarifa Mínima</option><option value="per_m3">Valor por m³</option></select><span>: <input type="text" class="tier-price currency-input" placeholder="R$ 0,00"></span>` : `<span>De <input type="number" class="tier-start" placeholder="Ex: 6"> até <input type="number" class="tier-end" placeholder="Ex: 10"> m³ | </span><select class="tier-type"><option value="per_m3">Valor por m³</option><option value="fixed">Tarifa Mínima</option></select><span>: <input type="text" class="tier-price currency-input" placeholder="R$ 0,00"></span>`; newTierRow.innerHTML = `${content}<button class="remove-tier-btn" title="Remover Faixa"><i class="fas fa-trash-alt"></i></button>`; tiersContainer.appendChild(newTierRow); }
+    
     function addInitialTier() { tiersContainer.innerHTML = ''; addTier(true); }
 
     function displayResults() {
@@ -94,8 +159,8 @@ document.addEventListener('DOMContentLoaded', () => {
             tableHTML += `<tr>
                 <td>${item.bloco}</td>
                 <td>${item.apto}</td>
-                <td>${formatNumberBR(item.leituraAnterior, 0)}</td>
-                <td>${formatNumberBR(item.leituraAtual, 0)}</td>
+                <td><input type="text" inputmode="numeric" id="leit-ant-${index}" class="edit-leitura table-input" data-index="${index}" data-field="leituraAnterior" value="${item.leituraAnterior}"></td>
+                <td><input type="text" inputmode="numeric" id="leit-atual-${index}" class="edit-leitura table-input" data-index="${index}" data-field="leituraAtual" value="${item.leituraAtual}"></td>
                 <td>${formatNumberBR(item.consumo, 0)}</td>
                 <td>${formatNumberBR(item.valorConsumo)}</td>
                 <td>${rateioDisplay}</td>
@@ -271,20 +336,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const ws = XLSX.utils.aoa_to_sheet(ws_data);
 
         // 7. APLICAÇÃO DE FORMATAÇÃO MONETÁRIA NAS CÉLULAS
-        // Itera sobre todas as células da planilha e aplica formato R$ nas colunas F, G, H, I (índices 5, 6, 7, 8)
         const range = XLSX.utils.decode_range(ws['!ref']);
         for (let R = range.s.r; R <= range.e.r; ++R) {
             for (let C = range.s.c; C <= range.e.c; ++C) {
                 const cellRef = XLSX.utils.encode_cell({c: C, r: R});
                 if (!ws[cellRef]) continue;
 
-                // Verifica se o conteúdo é número (type 'n')
                 if (ws[cellRef].t === 'n') {
-                    // Colunas F(5), G(6), H(7), I(8) -> Formato "R$ 1.234,56"
                     if (C >= 5 && C <= 8) {
                         ws[cellRef].z = '"R$ "#,##0.00';
                     }
-                    // Opcional: Coluna E(4) Consumo -> Formato "1.234,56" (sem R$)
                     if (C === 4) {
                         ws[cellRef].z = '#,##0.00';
                     }
