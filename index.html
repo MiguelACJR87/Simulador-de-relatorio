@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de Relatórios</title>
+    <title>Simulador de Relatórios — TECHMETRIA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -12,7 +15,13 @@
     <div id="toast-container"></div>
 
     <header class="main-header">
-        <h1><i class="fas fa-calculator"></i> Simulador de Relatórios</h1>
+        <h1>
+            <i class="fas fa-calculator"></i>
+            <span>
+                Simulador de Relatórios
+                <span class="header-subtitle">TECHMETRIA — Soluções Inteligentes</span>
+            </span>
+        </h1>
         <button id="infoBtn" class="info-btn" title="Informações"><i class="fas fa-info"></i></button>
     </header>
 
@@ -24,11 +33,17 @@
             <div class="card-body">
                 <div class="form-group">
                     <label for="fileInput">Arquivo de Leitura (Formato Carsoft)</label>
-                    <input type="file" id="fileInput" class="file-input" accept=".txt">
+                    <div id="dropZoneFile" class="drop-zone">
+                        <input type="file" id="fileInput" class="file-input" accept=".txt">
+                        <span class="drop-zone-hint">Nenhum arquivo selecionado</span>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="logoInput">Logo para o Relatório (Opcional)</label>
-                    <input type="file" id="logoInput" class="file-input" accept="image/png, image/jpeg">
+                    <div id="dropZoneLogo" class="drop-zone">
+                        <input type="file" id="logoInput" class="file-input" accept="image/png, image/jpeg">
+                        <span class="drop-zone-hint">Nenhuma imagem selecionada</span>
+                    </div>
                     <div class="logo-preview-container">
                         <img id="logoPreview" src="#" alt="Pré-visualização do Logo" style="display: none;">
                     </div>
@@ -60,6 +75,10 @@
                     <label for="commonAreaMetersSelect">Selecione o(s) medidor(es) da Área Comum:</label>
                     <select name="commonAreaMetersSelect" id="commonAreaMetersSelect" multiple></select>
                     <small>Segure Ctrl (ou Cmd em Mac) para selecionar mais de um.</small>
+                    <div class="rateio-container" style="margin-top: 6px;">
+                        <input type="checkbox" id="applyRateioValue">
+                        <label for="applyRateioValue">Ratear o valor entre as unidades?</label>
+                    </div>
                 </div>
                 <div class="rateio-container">
                     <input type="checkbox" id="includeManagementFee">
@@ -97,7 +116,7 @@
                 <div class="card-body">
                     <div id="results-table"></div>
                     
-                    <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+                    <div class="export-buttons">
                         <button id="generatePdfBtn" class="btn btn-dark"><i class="fas fa-file-pdf"></i> Gerar Relatório PDF</button>
                         <button id="generateXlsxBtn" class="btn btn-success"><i class="fas fa-file-excel"></i> Gerar Excel (XLSX)</button>
                     </div>
